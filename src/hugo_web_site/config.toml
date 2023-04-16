@@ -1,0 +1,4 @@
+baseURL = 'http://example.org/'
+languageCode = 'en-us'
+title = 'Welcome to the "Lambda for containers developers" demo site'
+theme = "mytheme"

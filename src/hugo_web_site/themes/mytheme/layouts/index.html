@@ -1,0 +1,9 @@
+{{ partial "header.html" . }}
+        {{ $pages := .Pages }}
+        {{ if .IsHome }}
+        {{ $pages = .Site.RegularPages }}
+        {{ end }}
+        {{ range first 10 $pages }}
+                {{ .Render "summary" }}
+        {{ end }}
+{{ partial "footer.html" . }}

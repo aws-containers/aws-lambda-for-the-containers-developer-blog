@@ -1,0 +1,76 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Sample SAM Template for aws-lambda-for-the-containers-developer-blog
+
+Parameters:
+  GitHubUsername:
+    Type: String
+
+Resources:
+  HugoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Timeout: 60
+      MemorySize: 1024
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Events:
+        ApiGw:
+          Type: Api
+          Properties:
+            Path: /
+            Method: get
+        Sqs:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt Queue.Arn
+      Policies:
+      - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      Environment:
+        Variables:
+          AWS_LAMBDA_FOR_THE_CONTAINERS_DEVELOPER_BLOG_BUCKET: !Ref HugoBucket
+          AWS_LAMBDA_FOR_THE_CONTAINERS_DEVELOPER_BLOG_GITHUB_USERNAME: !Ref GitHubUsername
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ../src
+      DockerTag: aws-lambda-for-the-containers-developer-blog-v1
+
+  HugoBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      PublicAccessBlockConfiguration:  
+        BlockPublicAcls: False
+        BlockPublicPolicy: False
+        IgnorePublicAcls: False
+        RestrictPublicBuckets: False
+  
+  HugoBucketPolicy: 
+    Type: AWS::S3::BucketPolicy
+    Properties: 
+      Bucket: !Ref HugoBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:GetObject'
+            Effect: Allow
+            Resource: !Sub 'arn:aws:s3:::${HugoBucket}/*'
+            Principal: '*'
+
+  Queue: 
+    Type: AWS::SQS::Queue
+    Properties:
+      VisibilityTimeout: 120
+            
+Outputs:
+  ApiGatewayUrl:
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/'
+  QueueUrl:
+    Value: !Ref Queue
